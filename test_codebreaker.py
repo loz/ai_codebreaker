@@ -31,6 +31,9 @@ class TestCodeBreaker(unittest.TestCase):
     self.game.code = [0,1,2,3]
     self.assertEqual(self.game.clue([3,1,2,0]), [2,2,1,1])
 
+  def test_repeat_target_only_attributes_single_clue(self):
+    self.game.code = [2,3,3,1] 
+    self.assertEqual(self.game.clue([1,3,2,1]), [2,2,1,0])
 
 if __name__ == '__main__':
   unittest.main()

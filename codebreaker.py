@@ -104,13 +104,14 @@ def random_game(render = False):
         print()
   return guesses
 
-def generate_random_guesses():
+def generate_random_guesses(n=500):
   sys.stdout.write("Generating Random\n")
   guesses = []
-  for run in range(1,500):
+  for run in range(1,n):
     sys.stdout.write(".")
     sys.stdout.flush()
     guesses += random_game()
+  return guesses
 
 if __name__ == '__main__':
   generate_random_guesses()

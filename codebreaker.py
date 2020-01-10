@@ -82,12 +82,12 @@ def random_game(render = False):
   prior_clue = [0,0,0,0]
   lastscore = 0
   if render:
-    print
-    print "-------- START STATE ------"
+    print()
+    print("-------- START STATE ------")
     game.render(prior_guess)
     game.render_clue(prior_clue)
-    print
-    print "-------- GUESSING ------"
+    print()
+    print("-------- GUESSING ------")
   for i in range(0,1000):
     guess = []
     for i in range(0,4):
@@ -101,7 +101,7 @@ def random_game(render = False):
       if render:
         game.render(guess)
         game.render_clue(keys)
-        print
+        print()
   return guesses
 
 def generate_random_guesses():

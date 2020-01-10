@@ -74,24 +74,43 @@ class Codebreaker:
     return keys
 
 
-def random_game():
+def random_game(render = False):
+  guesses = []
   game = Codebreaker()
   game.random_code()
-  game.render()
-  print
-  print "-------- START STATE ------"
-  game.render([0,0,0,0])
-  game.render_clue([0,0,0,0])
-  print
-  print "-------- GUESSING ------"
-  for i in range(0,20):
+  prior_guess = [0,0,0,0]
+  prior_clue = [0,0,0,0]
+  lastscore = 0
+  if render:
+    print
+    print "-------- START STATE ------"
+    game.render(prior_guess)
+    game.render_clue(prior_clue)
+    print
+    print "-------- GUESSING ------"
+  for i in range(0,1000):
     guess = []
     for i in range(0,4):
       guess.append(random.randrange(0,6)+1)
     keys = game.clue(guess)
-    game.render(guess)
-    game.render_clue(keys)
-    print
+    if sum(keys) >= lastscore:
+      guesses.append({"prior_guess" : prior_guess, "prior_clue" : prior_clue, "guess" : guess })
+      lastscore = sum(keys)
+      prior_guess = guess
+      prior_clue = keys
+      if render:
+        game.render(guess)
+        game.render_clue(keys)
+        print
+  return guesses
+
+def generate_random_guesses():
+  sys.stdout.write("Generating Random\n")
+  guesses = []
+  for run in range(1,500):
+    sys.stdout.write(".")
+    sys.stdout.flush()
+    guesses += random_game()
 
 if __name__ == '__main__':
-  random_game()
+  generate_random_guesses()

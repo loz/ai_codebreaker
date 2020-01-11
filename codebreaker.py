@@ -74,35 +74,91 @@ class Codebreaker:
     return keys
 
 
-def random_game(render = False):
-  guesses = []
-  game = Codebreaker()
-  game.random_code()
-  prior_guess = [0,0,0,0]
-  prior_clue = [0,0,0,0]
-  lastscore = 0
-  if render:
-    print()
-    print("-------- START STATE ------")
-    game.render(prior_guess)
-    game.render_clue(prior_clue)
-    print()
-    print("-------- GUESSING ------")
-  for i in range(0,1000):
+class RandomPlayer:
+  def guess(self, pegs, clue):
     guess = []
     for i in range(0,4):
       guess.append(random.randrange(0,6)+1)
-    keys = game.clue(guess)
-    if sum(keys) >= lastscore:
-      guesses.append({"prior_guess" : prior_guess, "prior_clue" : prior_clue, "guess" : guess })
-      lastscore = sum(keys)
-      prior_guess = guess
-      prior_clue = keys
-      if render:
-        game.render(guess)
-        game.render_clue(keys)
-        print()
-  return guesses
+    return guess
+
+class OptimalPlayer:
+  def __init__(self):
+    self.refboard = Codebreaker()
+    self.options = []
+    for first in range(1,7):
+      for second in range(1,7):
+        for third in range(1,7):
+          for fourth in range(1,7):
+            self.options.append([first, second, third, fourth])
+    self.firstguess = True
+
+  def guess(self, pegs, clue):
+    if self.firstguess:
+      self.firstguess = False 
+      return [1, 1, 2, 2] #Perfect First Guess
+    else:
+      self.filter_options(pegs, clue)
+      return random.choice(self.options)
+
+  def test_option(self, option, pegs, clue):
+    self.refboard.code = option
+    return self.refboard.clue(pegs) == clue
+  
+  def filter_options(self, pegs, clue):
+    self.options = [opt for opt in self.options if self.test_option(opt, pegs, clue)]
+
+class Game:
+
+  def __init__(self, player, render=False):
+    self.guesses = []
+    self.game = Codebreaker()
+    self.game.random_code()
+    self.prior_guess = [0,0,0,0]
+    self.prior_clue = [0,0,0,0]
+    self.lastscore = 0
+    self.render = render
+    self.player = player
+    if render:
+      print()
+      print("-------- START STATE ------")
+      self.game.render(self.prior_guess)
+      self.game.render_clue(self.prior_clue)
+      print()
+      print("-------- GUESSING ------")
+
+  def round(self):
+    guess = self.player.guess(self.prior_guess, self.prior_clue)
+    keys = self.game.clue(guess)
+    self.guesses.append({
+      "prior_guess" : self.prior_guess,
+      "prior_clue" : self.prior_clue,
+      "guess" : guess
+      })
+    self.lastscore = sum(keys)
+    self.prior_guess = guess
+    self.prior_clue = keys
+    if self.render:
+      self.game.render(guess)
+      self.game.render_clue(keys)
+      print()
+    return keys == [2, 2, 2, 2] #WON
+
+  def play(self, n=15):
+    for i in range(0,n):
+      over = self.round()
+      if over:
+        break
+    if (over and self.render):
+      print("----- WON -----")
+    if self.render:
+      print("===== TARGET =====")
+      self.game.render()
+      print()
+    return self.guesses
+
+def random_game():
+  game = Game(RandomPlayer())
+  return game.play(20)
 
 def generate_random_guesses(n=500):
   sys.stdout.write("Generating Random\n")
@@ -114,4 +170,6 @@ def generate_random_guesses(n=500):
   return guesses
 
 if __name__ == '__main__':
-  generate_random_guesses()
+  game = Game(OptimalPlayer(), True)
+  game.play()
+  #generate_random_guesses()

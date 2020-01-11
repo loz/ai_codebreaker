@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import tensorflow as tf
 import codebreaker as cb
+import numpy as np
 
 model = tf.keras.models.Sequential([
   tf.keras.layers.Dense(8, input_shape=(8,)),
@@ -21,8 +22,17 @@ for guess in training_data:
   for peg in guess["guess"]:
     v = [0, 0, 0, 0, 0, 0]
     v[peg-1] = 1
-    target += v
-  y_train.append(target)
+    target.append(v)
+
+  #Rotate Maybe?
+  rtarget = []
+  for i in range(0,6):
+    rtarget.append(target[0][i])
+    rtarget.append(target[1][i])
+    rtarget.append(target[2][i])
+    rtarget.append(target[3][i])
+
+  y_train.append(rtarget)
 
 model.fit(x_train, y_train, epochs=10)
 
@@ -48,3 +58,6 @@ for turn in range(1,12):
   game.render(guess)
   game.render_clue(clue)
   print()
+print("====ACUTAL====")
+game.render()
+print

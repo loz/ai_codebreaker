@@ -160,6 +160,10 @@ def random_game():
   game = Game(RandomPlayer())
   return game.play(20)
 
+def optimal_game():
+  game = Game(OptimalPlayer())
+  return game.play(20)
+
 def generate_random_guesses(n=500):
   sys.stdout.write("Generating Random\n")
   guesses = []
@@ -169,7 +173,14 @@ def generate_random_guesses(n=500):
     guesses += random_game()
   return guesses
 
+def generate_optimal_guesses(n=500):
+  sys.stdout.write("Generating Optimal\n")
+  guesses = []
+  for run in range(1,n):
+    sys.stdout.write(".")
+    sys.stdout.flush()
+    guesses += optimal_game()
+  return guesses
+
 if __name__ == '__main__':
-  game = Game(OptimalPlayer(), True)
-  game.play()
-  #generate_random_guesses()
+  generate_optimal_guesses()

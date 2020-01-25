@@ -25,64 +25,54 @@ class TensorPlayer:
             ])
     self.model.compile(optimizer='sgd', loss='mean_squared_error', metrics=['accuracy'])
 
-  def train_model(self, x_train, t_train, epochs=15):
+  def train_model(self, training_data, epochs=15):
+    x_train, y_train = self.reshape_training_data(training_data)
     self.model.fit(x_train, y_train, epochs=epochs)
 
-
-def build_training_data(size = 2000):
-  training_data = cb.generate_random_guesses(size)
-  #training_data = cb.generate_optimal_guesses(size)
+  def reshape_training_data(self,training_data):
+    """
+    training_data = [
+      [{guess1},{guess2}..]
+    ]
+    """
   
-  x_train = []
-  y_train = []
-  for guess in training_data:
-    x_train.append(guess["prior_guess"] + guess["prior_clue"])
-    target = []
-    for peg in guess["guess"]:
-      v = [0, 0, 0, 0, 0, 0]
-      v[peg-1] = 1
-      target.append(v)
-  
-    #Rotate Orientation
-    rtarget = []
-    for i in range(0,6):
-      rtarget.append(target[0][i])
-      rtarget.append(target[1][i])
-      rtarget.append(target[2][i])
-      rtarget.append(target[3][i])
-  
-    y_train.append(rtarget)
-  return x_train, y_train
-
+    x_train = []
+    y_train = []
+    for game in training_data:
+      for guess in game:
+        x_train.append(guess["prior_guess"] + guess["prior_clue"])
+        target = []
+        for peg in guess["guess"]:
+          v = [0, 0, 0, 0, 0, 0]
+          v[peg-1] = 1
+          target.append(v)
+      
+        #Rotate Orientation
+        rtarget = []
+        for i in range(0,6):
+          rtarget.append(target[0][i])
+          rtarget.append(target[1][i])
+          rtarget.append(target[2][i])
+          rtarget.append(target[3][i])
+    
+        y_train.append(rtarget)
+    return x_train, y_train
 
 """
-guess = [0, 0, 0, 0]
-clue = [0, 0, 0, 0]
+  WANT:
 
-game = cb.Codebreaker()
-game.random_code()
+  Lookbck 5 goes
+  0: [0000] [0000] -> [1111]
+  1: [1111] [????] -> [2222]
+  2: [2222] [????] -> [3333]
+  3: [3333] [????] -> [4444]
+  4: [4444] [????] -> [5555]
 
-game.render(guess)
-game.render_clue(clue)
-print()
-"""
+  NEED:
+    Reshape game runs to have 5 step window
+    Tell NN that score wants to be [2 2 2 2]
 
-"""
-for turn in range(1,12):
-  choice = model.predict([guess + clue])
-  choice = tf.reshape(choice, (6,4))
-  choice = tf.math.argmax(choice)
-  choice = choice.numpy().tolist()
-  guess = []
-  for peg in choice:
-    guess.append(peg+1)
-  clue = game.clue(guess)
-  game.render(guess)
-  game.render_clue(clue)
-  print()
-print("====ACUTAL====")
-game.render()
-print
+
 """
 
 def tensor_game(player):
@@ -90,7 +80,8 @@ def tensor_game(player):
   return game.play(20)
 
 player = TensorPlayer()
-x_train, y_train = build_training_data()
+#training_data = cb.generate_random_guesses(10)
+training_data = cb.generate_optimal_guesses(10)
 player.build_model()
-player.train_model(x_train, y_train)
+player.train_model(training_data, 5)
 tensor_game(player)

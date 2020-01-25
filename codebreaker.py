@@ -166,21 +166,21 @@ def optimal_game():
 
 def generate_random_guesses(n=500):
   sys.stdout.write("Generating Random\n")
-  guesses = []
+  games = []
   for run in range(1,n):
     sys.stdout.write(".")
     sys.stdout.flush()
-    guesses += random_game()
-  return guesses
+    games.append(random_game())
+  return games
 
 def generate_optimal_guesses(n=500):
   sys.stdout.write("Generating Optimal\n")
-  guesses = []
+  games = []
   for run in range(1,n):
     sys.stdout.write(".")
     sys.stdout.flush()
-    guesses += optimal_game()
-  return guesses
+    games.append(optimal_game())
+  return games
 
 if __name__ == '__main__':
   generate_optimal_guesses()

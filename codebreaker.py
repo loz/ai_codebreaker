@@ -2,6 +2,58 @@ import copy
 import sys
 import random
 
+import tensorflow as tf
+from tf_agents.trajectories import time_step
+from tf_agents import specs
+from tf_agents.environments import py_environment
+import numpy as np
+
+class RLEnv(py_environment.PyEnvironment):
+
+  def __init__(self):
+    self.guesses = 0
+    self.game = Game(RandomPlayer())
+
+  def _reset(self):
+    self.guesses = 0
+    self.game = Game(RandomPlayer())
+    return self.step_data()
+
+  def _step(self, action):
+    self.guesses += 1
+    self.game.guess(action)
+    return self.step_data()
+
+  def step_data(self):
+    clue = np.array(self.game.prior_clue)
+    clue = clue * clue
+    #reward = np.array([np.sum(clue)])
+    reward = np.sum(clue)
+    observation = tf.convert_to_tensor(np.array([self.game.prior_guess, self.game.prior_clue]))
+    if self.guesses > 10:
+      return time_step.termination(observation, reward)
+    else:
+      return time_step.transition(observation, reward)
+
+  def render(self):
+    self.game.render()
+
+  def action_spec(self):
+    return specs.array_spec.BoundedArraySpec(
+      (4,), np.int64,
+      minimum=1,
+      maximum=6,
+      name='action'
+    )
+
+  def observation_spec(self):
+    return specs.array_spec.BoundedArraySpec(
+      (2,4), np.int64,
+      minimum=0,
+      maximum=6,
+      name='observation')
+
+
 class Codebreaker:
 
   def __init__(self):
@@ -48,9 +100,13 @@ class Codebreaker:
     pass
 
   def clue(self, guess):
+    print(guess)
     keys = []
     code = copy.copy(self.code)
-    cguess = copy.copy(guess)
+    if hasattr(guess, 'tolist'):
+      cguess = guess.tolist()
+    else:
+      cguess = copy.copy(guess)
 
     #first do exact matches
     for idx in range(0,4):
@@ -116,9 +172,9 @@ class Game:
     self.prior_guess = [0,0,0,0]
     self.prior_clue = [0,0,0,0]
     self.lastscore = 0
-    self.render = render
+    self.rendering = render
     self.player = player
-    if render:
+    if self.rendering:
       print()
       print("-------- START STATE ------")
       self.game.render(self.prior_guess)
@@ -126,8 +182,12 @@ class Game:
       print()
       print("-------- GUESSING ------")
 
-  def round(self):
-    guess = self.player.guess(self.prior_guess, self.prior_clue)
+  def render(self):
+    self.game.render(self.prior_guess)
+    self.game.render_clue(self.prior_clue)
+    print()
+
+  def guess(self, guess):
     keys = self.game.clue(guess)
     self.guesses.append({
       "prior_guess" : self.prior_guess,
@@ -137,11 +197,14 @@ class Game:
     self.lastscore = sum(keys)
     self.prior_guess = guess
     self.prior_clue = keys
-    if self.render:
-      self.game.render(guess)
-      self.game.render_clue(keys)
-      print()
+    if self.rendering:
+      self.render()
     return keys == [2, 2, 2, 2] #WON
+    
+
+  def round(self):
+    guess = self.player.guess(self.prior_guess, self.prior_clue)
+    return self.guess(guess)
 
   def play(self, n=15):
     for i in range(0,n):

@@ -144,6 +144,8 @@ agent = D4qnAgent(
 
 agent.initialize()
 
+print(agent)
+
 eval_policy = agent.policy
 collect_policy = agent.collect_policy
 
@@ -164,6 +166,7 @@ def compute_avg_return(environment, policy, num_episodes=10):
 
     while not time_step.is_last():
       action_step = policy.action(time_step)
+      print(action_step)
       time_step = environment.step(action_step.action)
       episode_return += time_step.reward
     total_return += episode_return
@@ -205,6 +208,9 @@ iterator = iter(dataset)
 
 agent.train = common.function(agent.train)
 agent.train_step_counter.assign(0)
+
+print(agent.policy)
+
 avg_return = compute_avg_return(eval_env, agent.policy, num_eval_episodes)
 returns = [avg_return]
 

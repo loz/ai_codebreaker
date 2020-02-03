@@ -100,7 +100,6 @@ class Codebreaker:
     pass
 
   def clue(self, guess):
-    print(guess)
     keys = []
     code = copy.copy(self.code)
     if hasattr(guess, 'tolist'):

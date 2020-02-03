@@ -4,6 +4,10 @@ import tensorflow as tf
 import codebreaker as cb
 import numpy as np
 
+
+import tensorflow_probability as tfp
+
+
 from tf_agents.agents.dqn import dqn_agent
 from tf_agents.environments import tf_py_environment
 from tf_agents.networks import encoding_network
@@ -11,6 +15,12 @@ from tf_agents.networks import network
 from tf_agents.utils import common
 from tf_agents.utils import nest_utils
 from tf_agents.policies import random_tf_policy
+
+from tf_agents.policies import boltzmann_policy
+from tf_agents.policies import epsilon_greedy_policy
+from tf_agents.policies import greedy_policy
+from tf_agents.policies import q_policy
+
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.trajectories import trajectory
 
@@ -81,6 +91,29 @@ class Q4Network(network.Network):
 class D4qnAgent(dqn_agent.DqnAgent):
   def _check_action_spec(self, action_spec):
     pass
+
+  def _setup_policy(self, time_step_spec, action_spec,
+    boltzmann_temperature, emit_log_probability):
+    policy = MyPolicy(
+    time_step_spec,
+    action_spec,
+    q_network=self._q_network,
+    emit_log_probability=emit_log_probability,
+    observation_and_action_constraint_splitter=(
+        self._observation_and_action_constraint_splitter))
+    return policy, policy
+
+class MyPolicy(q_policy.QPolicy):
+  def ___action(self, time_step, policy_state, seed):
+    print("MyPolicy: Action")
+    print(self, time_step, policy_state, seed)
+    seed_stream = tfp.util.SeedStream(seed=seed, salt='ppo_policy')
+    distribution_step = self._distribution(time_step, policy_state)
+    actions = [distribution_step.action]
+    print("=====")
+    print(actions)
+
+    return distribution_step._replace(actions=actions)
 
 tf.compat.v1.enable_v2_behavior()
 
@@ -153,10 +186,7 @@ random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(),
                                                 train_env.action_spec())
 
 time_step = env.reset()
-print(time_step)
-print("------")
 action = random_policy.action(time_step)
-print(action)
 
 def compute_avg_return(environment, policy, num_episodes=10):
   total_return = 0.0
@@ -166,7 +196,6 @@ def compute_avg_return(environment, policy, num_episodes=10):
 
     while not time_step.is_last():
       action_step = policy.action(time_step)
-      print(action_step)
       time_step = environment.step(action_step.action)
       episode_return += time_step.reward
     total_return += episode_return
